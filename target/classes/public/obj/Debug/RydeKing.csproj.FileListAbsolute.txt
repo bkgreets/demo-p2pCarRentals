@@ -1,7 +1,0 @@
-C:\Software\carsclub\CarsClub\RydeKing\bin\RydeKing.dll.config
-C:\Software\carsclub\CarsClub\RydeKing\bin\RydeKing.dll
-C:\Software\carsclub\CarsClub\RydeKing\bin\RydeKing.pdb
-C:\Software\carsclub\CarsClub\RydeKing\obj\Debug\RydeKing.csprojResolveAssemblyReference.cache
-C:\Software\carsclub\CarsClub\RydeKing\obj\Debug\RydeKing.dll
-C:\Software\carsclub\CarsClub\RydeKing\obj\Debug\RydeKing.pdb
-C:\Software\carsclub\CarsClub\RydeKing\bin\Content\Images\1364568484-OYw5Hv98.jpg

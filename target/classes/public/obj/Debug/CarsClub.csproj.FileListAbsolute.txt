@@ -1,6 +1,0 @@
-C:\Software\carsclub\CarsClub\CarsClub\bin\CarsClub.dll.config
-C:\Software\carsclub\CarsClub\CarsClub\bin\CarsClub.dll
-C:\Software\carsclub\CarsClub\CarsClub\bin\CarsClub.pdb
-C:\Software\carsclub\CarsClub\CarsClub\obj\Debug\CarsClub.csprojResolveAssemblyReference.cache
-C:\Software\carsclub\CarsClub\CarsClub\obj\Debug\CarsClub.dll
-C:\Software\carsclub\CarsClub\CarsClub\obj\Debug\CarsClub.pdb
