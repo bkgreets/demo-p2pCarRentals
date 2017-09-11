@@ -1,0 +1,1001 @@
+﻿<script type="text/javascript">
+    //var productionAddress = /RydeKing.com$/;
+    //if (productionAddress.test(window.location.host)) {
+    //    // google analytics
+    //    // show only on production server
+    //    var _gaq = _gaq || [];
+    //    _gaq.push(['_setAccount', 'UA-35276548-1']);
+    //    _gaq.push(['_setDomainName', 'RydeKing.com']);
+    //    _gaq.push(['_trackPageview']);
+
+    //    (function() {
+    //        var ga = document.createElement('script');
+    //        ga.type = 'text/javascript';
+    //        ga.async = true;
+    //        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    //        var s = document.getElementsByTagName('script')[0];
+    //        s.parentNode.insertBefore(ga, s);
+    //    })();
+    //}
+
+    var WEB_ROOT = '/';
+    $(function () {
+        $('.dropdown-toggle').dropdown()
+        $("#identify_form :input").tooltip();
+
+        $('input[name=date_start]').live('change', function () {
+            var start = $(this);
+            var end = $('input[name=date_end]');
+            if (start.val() > end.val()) {
+                end.val(start.val());
+            } else {
+                var start_obj = new Date(start.val());
+                var end_obj = new Date(end.val());
+                if (end_obj.getTime() - start_obj.getTime() > 7 * 24 * 3600 * 1000) {
+                    end_obj.setTime(start_obj.getTime() + 7 * 24 * 3600 * 1000);
+                    var mon = end_obj.getMonth() + 1;
+                    var day = end_obj.getDate();
+                    if (mon < 10) {
+                        mon = '0' + mon;
+                    }
+                    if (day < 10) {
+                        day = '0' + day;
+                    }
+                    end.val(end_obj.getFullYear() + '-' + mon + '-' + day);
+                }
+
+                if (end_obj.getTime() - start_obj.getTime() >= 24 * 3600 * 1000) {
+                    $('select[name=end]').val($('select[name=begin]').val());
+                }
+            }
+        });
+
+        $('input[name=date_end]').live('change', function () {
+            var start = $('input[name=date_start]');
+            var end = $(this);
+            if (start.val() > end.val()) {
+                start.val(end.val());
+            } else {
+                var start_obj = new Date(start.val());
+                var end_obj = new Date(end.val());
+                if (end_obj.getTime() - start_obj.getTime() > 7 * 24 * 3600 * 1000) {
+                    start_obj.setTime(end_obj.getTime() - 7 * 24 * 3600 * 1000);
+                    var mon = start_obj.getMonth() + 1;
+                    var day = start_obj.getDate();
+                    if (mon < 10) {
+                        mon = '0' + mon;
+                    }
+                    if (day < 10) {
+                        day = '0' + day;
+                    }
+                    start.val(start_obj.getFullYear() + '-' + mon + '-' + day);
+                }
+
+                if (end_obj.getTime() - start_obj.getTime() >= 24 * 3600 * 1000) {
+                    $('select[name=end]').val($('select[name=begin]').val());
+                }
+            }
+        });
+
+        jQuery('#sign_up_form #input-email').focus(function () {
+            $("#input-email ~ img[alt*=alid]").attr("alt", "Invalid").hide();
+            $(this).parents('.control-group').removeClass('error');
+            $(this).siblings('p.help-block').hide();
+        });
+
+        jQuery('#sign_up_form #input-email').blur(function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            var email = jQuery(this).val();
+            var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            if (email == '' || !regex.test(email)) {
+                $("#input-email ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+                return;
+            }
+            $("#input-email ~ img[alt*=alid]").attr("alt", "Invalid").hide();
+            jQuery('#email-vcode-ajax-loader').show();
+            //jQuery('#send-vcode').addClass('hide');
+            var obj = jQuery('#input-email');
+            jQuery.ajax({
+                url: '/account/verify-email?' + new Date().getTime(),
+                data: {
+                    email: email
+                },
+                dataType: 'text',
+                success: function (data) {
+                    if (data == 1) {
+                        jQuery('#email-vcode-ajax-loader').hide();
+                        $("#input-email ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-valid.png').attr("alt", "Valid").css("display", "inline");
+                        obj.parents('.control-group').removeClass('error');
+                        obj.siblings('p.help-block').hide();
+                        //jQuery('#vcode-hint').fadeIn();
+                    } else if (data == 2) {
+                        jQuery('#email-vcode-ajax-loader').hide();
+                        if (obj.siblings('p.help-block').length == 0) {
+                            obj.parent().append('<p class="help-block">Email is already taken.</p>');
+                        } else {
+                            obj.siblings('p.help-block').show();
+                        }
+                        obj.parents('.control-group').addClass('error');
+                        $("#input-email ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+                    } else {
+                        jQuery('#email-vcode-ajax-loader').hide();
+                        //jQuery('#send-vcode').removeClass('hide');
+                    }
+                },
+                error: function () {
+                    jQuery('#email-vcode-ajax-loader').hide();
+                    //jQuery('#send-vcode').removeClass('hide');
+                }
+            });
+        });
+
+        jQuery('#sign_up_form').liveValidation({
+            validIco: WEB_ROOT + 'static/img/jquery.liveValidation-valid.png',
+            invalidIco: WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png',
+            required: ['input-email', 'input-password', 'input-displayname'], //<927modify/>
+            fields: {
+                'input-password': /\S{6}/,
+                'input-displayname': /^\S.*$/
+            }
+        });
+
+        jQuery('#resetpw_form').liveValidation({
+            validIco: WEB_ROOT + 'static/img/jquery.liveValidation-valid.png',
+            invalidIco: WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png',
+            required: ['input-password'],
+            fields: {
+                'input-password': /\S{6}/
+            }
+        });
+        jQuery('#fuel_form').liveValidation({
+            validIco: WEB_ROOT + 'static/img/jquery.liveValidation-valid.png',
+            invalidIco: WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png',
+            required: ['identity_name', 'identity_nric', 'identity_address', 'licence_no'],
+            fields: {
+                identity_name: /^\S.*$/,
+                identity_nric: /^\S.*$/,
+                identity_address: /^\S.*$/,
+                licence_no: /^[A-Z0-9]+$/
+            }
+        });
+        jQuery('#identity_form').liveValidation({
+            validIco: WEB_ROOT + 'static/img/jquery.liveValidation-valid.png',
+            invalidIco: WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png',
+            required: ['identity_name', 'identity_nric', 'identity_address', 'identity_dri_ex', 'identity_occupation', 'identity_demerit_points'],
+            fields: {
+                identity_name: /^\S.*$/,
+                identity_nric: /^\S.*$/,
+                identity_address: /^\S.*$/,
+                identity_dri_ex: /^\S.*$/,
+                identity_occupation: /^\S.*$/,
+                identity_demerit_points: /^\d{1,2}$/
+            }
+        });
+
+        jQuery("#input-password2").keyup(function () {
+            var psw = jQuery("#input-password").val();
+            if (psw.length > 5 && this.value == psw) {
+                $("#input-password2 ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-valid.png').attr("alt", "Valid").css("display", "inline");
+            } else {
+                $("#input-password2 ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+            }
+        });
+
+        jQuery("#input-password2").focus(function () {
+            var img_obj = $("img", $(this).parent());
+            if (img_obj.attr("alt") == "Invalid") {
+                img_obj.css("display", "none");
+            }
+        });
+        jQuery("img[alt='Invalid']").each(function () {
+            var input_value = jQuery("input", jQuery(this).parent()).val();
+            if (input_value == "")
+                this.style.display = "none";
+        });
+
+        jQuery("#phone").blur(function () {
+            var regex = /^(8|9)[0-9]{7}$/;
+            if (!regex.test(this.value)) {
+                jQuery("#error_p").css("display", "inline");
+                //<927modify/>
+                return false;
+            }
+            return true;
+        });
+
+        jQuery("#phone").click(function () {
+            jQuery("#error_p").css("display", "none");
+            //<927modify/>
+        });
+
+        jQuery("#verify_form").submit(function () {
+            if (jQuery("#error_p").css("display") == "block") {
+                return false;
+            }
+        });
+        //jQuery("#previousurl").val(  document.referrer ); //<929modify/>
+        //<927modify>
+        /*
+         jQuery("#identify_form input[type='file']").blur(function(){
+         var parent_obj = jQuery(this).parent();
+         if( !jQuery( "p", parent_obj )[0] ){
+         jQuery("div" , parent_obj).append("<p class='text-error' style='margin-left:0;display:none;'>Please enter file.</p>");
+         }
+
+         var p_obj = jQuery("p", parent_obj);
+         if( this.value == "" )
+         p_obj.css("display", "inline").removeClass("fvalid").addClass("finvalid");
+         else
+         p_obj.css("display", "none").removeClass("finvalid").addClass("fvalid");
+         });
+         */
+
+        jQuery("#identify_form").submit(function () {
+            $("img[alt='Invalid']").css('display', 'inline');
+            var file_validation = true;
+            check_radio('gender');
+            check_radio('marital');
+            check_demerit();
+            check_demerit_reason();
+            check_accident_details();
+
+            if ($('img[alt=Invalid]').length > 0) {
+                file_validation = false;
+            }
+
+            if (file_validation) {
+                this.submit();
+                jQuery('#btn-identify').hide();
+                jQuery('img.ajax-loader').show();
+            } else {
+                scrollto_invalid();
+            }
+
+            return file_validation;
+        });
+
+        jQuery("#documents_form").submit(function () {
+            $("img[alt='Invalid']").css('display', 'inline');
+            var file_validation = true;
+            //file_validation = check_required_file('icfront') && check_required_file('icback') && check_required_file('dlfront') && check_required_file('dlback');
+            file_validation = check_required_file('dlfront') && check_required_file('dlback');
+
+            if ($('img[alt=Invalid]').length > 0) {
+                file_validation = false;
+            }
+
+            if (file_validation) {
+                jQuery('#btn-documents').hide();
+                jQuery('img.ajax-loader').show();
+            } else {
+                scrollto_invalid();
+            }
+
+            return file_validation;
+        });
+
+        jQuery("#sendverifycode").submit(function () {
+            if (jQuery("#phone").val() == "" || jQuery("p", this)[0].style.display == "inline") {
+                jQuery("#error_p").css("display", "inline");
+                return false;
+            }
+        });
+
+        jQuery("#code").blur(function () {
+            if (this.value == "") {
+                $("#error_verify_code").css("display", "inline");
+            } else {
+                $("#error_verify_code").css("display", "none");
+            }
+        });
+
+        jQuery("#verifyform").submit(function () {
+            var verify_code = jQuery("#code").val();
+            if (verify_code == "") {
+                $("#error_verify_code").css("display", "inline");
+                return false;
+            }
+        });
+
+        jQuery("#verifyownerform").submit(function () {
+            var verify_code = jQuery("#code").val();
+            if (verify_code == "") {
+                $("#error_verify_code").css("display", "inline");
+                return false;
+            }
+
+            jQuery('input[name=referer]').val(jQuery('#referal-code').val());
+            jQuery("#codeowner").val(verify_code);
+        });
+
+        jQuery("#verifyfuelform").submit(function () {
+            var verify_code = jQuery("#code").val();
+            if (verify_code == "") {
+                $("#error_verify_code").css("display", "inline");
+                return false;
+            }
+
+            jQuery('input[name=referer]').val(jQuery('#referal-code').val());
+            jQuery("#codefuel").val(verify_code);
+        });
+
+        jQuery('#forgotpw-submit').click(function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            jQuery('.forgotpw-group').removeClass('error');
+            jQuery('.help-block').hide();
+            jQuery('#forgotpw-email ~ img[alt*=alid]').hide();
+            var pwemail = jQuery('#forgotpw-email').val();
+            var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            if (pwemail != '' && regex.test(pwemail)) {
+                jQuery('.ajax-loader').show();
+                jQuery('#forgotpw-submit').hide();
+                jQuery.ajax({
+                    url: '/account/forgotpassword?' + new Date().getTime(),
+                    type: 'POST',
+                    data: {
+                        email: pwemail
+                    },
+                    dataType: 'text',
+                    success: function (data) {
+                        if (data == 1) {
+                            jQuery('#forgotpw-form').hide();
+                            jQuery('#forgotpw-success').fadeIn();
+                        } else {
+                            $("#forgotpw-email ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+                            jQuery('.forgotpw-group').addClass('error');
+                            jQuery('.help-block').html('Email is not registered.').show();
+                            jQuery('.ajax-loader').hide();
+                            jQuery('#forgotpw-submit').show();
+                        }
+                    }
+                });
+            } else {
+                $("#forgotpw-email ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+                jQuery('.forgotpw-group').addClass('error');
+                jQuery('.help-block').html('Email is invalid').show();
+            }
+        });
+
+        jQuery('#forgotpw-email').focus(function () {
+            jQuery('#forgotpw-email ~ img[alt*=alid]').hide();
+            jQuery('.forgotpw-group').removeClass('error');
+            jQuery('.help-block').hide();
+        });
+
+        function scrollto_invalid() {
+            var obj = $('img[alt=Invalid]').first();
+            if (obj.length > 0) {
+                var pos = obj.offset();
+                window.scrollTo(pos.left, pos.top);
+            }
+        }
+
+        function check_required_file(obj_id) {
+            if ($('input[name=' + obj_id + '_cur]').length > 0 && $('input[name=' + obj_id + '_cur]').val()) {
+                return true;
+            } else {
+                var obj = $('#' + obj_id).parent();
+                if (obj.next('img').length == 0) {
+                    obj.after('<img src="/static/img/jquery.liveValidation-invalid.png" alt="Invalid" style="display:inline;float:left;">');
+                } else {
+                    obj.next('img').attr('alt', 'Invalid').show();
+                }
+                return false;
+            }
+        }
+
+        function check_radio(input_class) {
+            var parking = $('input.' + input_class + ':checked');
+            var fist_parking_obj = $('input.' + input_class).first().next();
+            if (parking.length == 0) {
+                if (fist_parking_obj.next('img').length == 0) {
+                    fist_parking_obj.after('<img src="/static/img/jquery.liveValidation-invalid.png" alt="Invalid" style="display:inline;margin-left:50px;">');
+                } else {
+                    fist_parking_obj.next('img').attr('alt', 'Invalid').css('display', 'inline');
+                }
+                return false;
+            } else {
+                fist_parking_obj.next('img').attr('alt', 'Valid').hide();
+            }
+            return true;
+        }
+
+        function check_demerit() {
+            var parking = $('#identity_demerit_points');
+            if (parking.val() > 24) {
+                if (parking.next('img').length == 0) {
+                    parking.after('<img src="/static/img/jquery.liveValidation-invalid.png" alt="Invalid" style="display:inline;margin-left:50px;">');
+                } else {
+                    parking.next('img').attr('alt', 'Invalid').css('display', 'inline').attr('src', '/static/img/jquery.liveValidation-invalid.png');
+                }
+                return false;
+            } else {
+                parking.next('img').attr('alt', 'Valid').hide();
+            }
+            return true;
+        }
+
+        function check_demerit_reason() {
+            var obj = $('#identity_demerit_reason');
+            if ($('#identity_demerit_points').val() > 0) {
+                if (obj.val() == '') {
+                    if (obj.next('img').length == 0) {
+                        obj.after('<img src="/static/img/jquery.liveValidation-invalid.png" alt="Invalid" style="display:inline;margin-left:0">');
+                    } else {
+                        obj.next('img').attr('alt', 'Invalid').css('display', 'inline').attr('src', '/static/img/jquery.liveValidation-invalid.png');
+                    }
+                } else {
+                    obj.next('img').attr('alt', 'Valid').hide();
+                }
+            } else {
+                obj.next('img').attr('alt', 'Valid').hide();
+            }
+            return true;
+        }
+
+        function check_accident_details() {
+            var obj = $('#identity_claims');
+            $('.accident_details_field').each(function () {
+                var field = $(this);
+                if (field.val() == '' && obj.val() == '1:Not at fault') {
+                    if (field.next('img').length == 0) {
+                        field.after('<img src="/static/img/jquery.liveValidation-invalid.png" alt="Invalid" style="display:inline;margin-left:0">');
+                    } else {
+                        field.next('img').attr('alt', 'Invalid').css('display', 'inline').attr('src', '/static/img/jquery.liveValidation-invalid.png');
+                    }
+                } else {
+                    field.next('img').attr('alt', 'Valid').hide();
+                }
+            });
+            return true;
+        }
+
+
+        jQuery('#licence_no').live('keyup', function (event) {
+            $(this).val($.trim($(this).val()));
+        });
+
+        jQuery('#licence_no').blur(function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            var licence_no = jQuery(this).val();
+            var obj = jQuery('#licence_no');
+            $("#licence_no ~ img[alt*=alid]").attr("alt", "Invalid").hide();
+            if (!licence_no) {
+                obj.parents('.control-group').addClass('error');
+                $("#licence_no ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+                return;
+            }
+            jQuery.ajax({
+                url: '/car/check_licence_no?' + new Date().getTime(),
+                data: {
+                    licence_no: licence_no,
+                    carID: $('input[name=carID]').val()
+                },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status == 1) {
+                        $("#licence_no ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-valid.png').attr("alt", "Valid").css("display", "inline");
+                        obj.parents('.control-group').removeClass('error');
+                        obj.siblings('p.help-block').hide();
+                    } else {
+                        var error_msg = '';
+                        var cur_uri = window.location.pathname;
+                        if (data.status == 2) {
+                            if (cur_uri == '/list-car') {
+                                window.location = '/edit-car/' + data.carID;
+                            } else if (cur_uri == '/list-car-fuel-privilege') {
+                                alert('This car has already applied iFuelMember.');
+                                window.location = '/dashboard';
+                            }
+                            $("#licence_no ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-valid.png').attr("alt", "Valid").css("display", "inline");
+                            return;
+                        } else if (data.status == 3) {
+                            if (cur_uri == '/list-car') {
+                                alert('This car has already applied iCarOwner');
+                                window.location = '/dashboard';
+                            } else if (cur_uri == '/list-car-fuel-privilege') {
+                                window.location = '/list-car-fuel-privilege/' + data.carID;
+                            }
+                            $("#licence_no ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-valid.png').attr("alt", "Valid").css("display", "inline");
+                            return;
+                        } else if (data.status == 98) {
+                            error_msg = 'Licence Plate No. is already taken. If it is not taken by yourself, please contact us.';
+                        } else if (data.status == 99) {
+                            error_msg = 'Licence Plate No. is invalid.';
+                        }
+
+                        if (obj.siblings('p.help-block').length == 0) {
+                            obj.parent().append('<p class="help-block">' + error_msg + '</p>');
+                        } else {
+                            obj.siblings('p.help-block').text(error_msg).show();
+                        }
+                        obj.parents('.control-group').addClass('error');
+                        $("#licence_no ~ img[alt*=alid]").attr("src", WEB_ROOT + 'static/img/jquery.liveValidation-invalid.png').attr("alt", "Invalid").css("display", "inline");
+                    }
+                }
+            });
+        });
+
+        if (jQuery('#licence_no').length > 0 && jQuery('#licence_no').val() && jQuery('#licence_no').attr('disabled') != 'disabled') {
+            jQuery('#licence_no').blur();
+        }
+    });
+</script>
+
+<div id="feature" class="scrollblock" data-type="background" data-speed="3" style="background-position: 50% 0px;">
+    <div class="container welcome">
+        <div>
+            <h1>Rent your neighbour's car</h1>
+            <p class="lead">
+                Share a car nearby at hourly rate whenever you need it.
+            </p>
+            <div class="container-fluid">
+
+                <div class="span8 call2action">
+                    <div class="span3">
+                        <a href="https://www.facebook.com/dialog/oauth?client_id=377669312303478&redirect_uri=http%3A%2F%2Fwww.RydeKing.com%2Ffacebook.php&state=6ddc0bfa362fb5795a7085805482231d&scope=email%2Cuser_birthday%2C+user_education_history%2C+user_groups%2C+user_location%2C+user_work_history" class="btn-signup-facebook"><span class="icon-facebook ">&nbsp;</span> Sign In with Facebook</a>
+                    </div>
+                    <div class="span1 ">
+                        or
+                    </div>
+                    <div class="span3">
+                        <a href="#/signup" class="btn-signup-email"><span class="icon-envelope-alt">&nbsp;</span>Sign Up with Email</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clearfix">
+        &nbsp;
+    </div>
+    <div class="search-box-wraper">
+        <div class="search-box">
+            <form method="get" style="margin:0" id="home-find-car-form">
+                <div class="search-address-box">
+                    <input id="SearchAddress" type="text" name="keyword" value="" placeholder="Type an Address or Zip Code">
+                    <a href="javascript:void(0);" class="" id="get-geo" data-toggle="tooltip" title="Use current location" data-animation="true" data-placement="below">&nbsp;</a>
+                    <input type="hidden" name="sort" value="location">
+                    <input type="hidden" name="lat" value="">
+                    <input type="hidden" name="lng" value="">
+                </div>
+                <a href="#findcar" class="btn-find-car-home">FIND CARS</a>
+            </form>
+        </div>
+    </div>
+</div>
+<section class="featured-list-container">
+    <section class="container ">
+        <h2>The perfect car could just be yours to drive in 5 minutes.</h2>
+        <!-- Featured Cars List -->
+        <div class="featured-list">
+            <div class="bx-wrapper" style="max-width: 950px;">
+                <div class="bx-viewport" style="width: 100%; overflow: hidden; position: relative; height: 243px;">
+                    <ul class="bxslider" style="width: 2580%; position: relative; transition-timing-function: ease-in-out; transition-duration: 0s; transform: translate3d(-959.929px, 0px, 0px);">
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/4392">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/SubaruImpreza2008.png">
+                                    </div>
+                                    <h3>S$ 10<small>/hr</small></h3>
+                                    <h4>Subaru Impreza 2008</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>989 Bukit Timah Road
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/3057">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/MitsubishiAirtrek.jpg">
+                                    </div>
+                                    <h3>S$ 15<small>/hr</small></h3>
+                                    <h4>Mitsubishi Airtrek 2005</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>76 Hougang Ave 7
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/3439">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/SubaruImpreza2007.jpg">
+                                    </div>
+                                    <h3>S$ 20<small>/hr</small></h3>
+                                    <h4>Subaru Impreza 2007</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>jurong west ave 1 blk 423
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;">
+                            <a href="http://www.RydeKing.com/1858">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/ToyotaVios2006.JPG">
+                                    </div>
+                                    <h3>S$ 9<small>/hr</small></h3>
+                                    <h4>Toyota Vios 2006</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>Blk 543 Ang Mo Kio Ave 10
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;">
+                            <a href="http://www.RydeKing.com/1009">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/KiaCarens2008.jpg">
+                                    </div>
+                                    <h3>S$ 50<small>/hr</small></h3>
+                                    <h4>Kia Carens 2008</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>20B Duchess Road
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;">
+                            <a href="http://www.RydeKing.com/3370">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/HyundaiI302008.JPG">
+                                    </div>
+                                    <h3>S$ 12<small>/hr</small></h3>
+                                    <h4>Hyundai i30 2008</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>608A Woodlands Ring Road
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;">
+                            <a href="http://www.RydeKing.com/3884">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/HondaAirwave2007.jpg">
+                                    </div>
+                                    <h3>S$ 15<small>/hr</small></h3>
+                                    <h4>Honda Airwave 2007</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>Cantonment Close (Tanjong Pagar / Keppel Road / Outram Road)
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/1858">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/ToyotaVios2006.jpg">
+                                    </div>
+                                    <h3>S$ 9<small>/hr</small></h3>
+                                    <h4>Toyota Vios 2006</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>Blk 543 Ang Mo Kio Ave 10
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/1009">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/KiaCarens2008.jpg">
+                                    </div>
+                                    <h3>S$ 50<small>/hr</small></h3>
+                                    <h4>Kia Carens 2008</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>20B Duchess Road
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/3370">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/HyundaiI302008.jpg">
+                                    </div>
+                                    <h3>S$ 12<small>/hr</small></h3>
+                                    <h4>Hyundai i30 2008</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>608A Woodlands Ring Road
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                        <li style="float: left; list-style: none; position: relative; width: 230px; margin-right: 10px;" class="bx-clone">
+                            <a href="http://www.RydeKing.com/3884">
+                                <div class="featured-list-car">
+                                    <div class="car-thumb">
+                                        <img class="featured-list-car-img" width="230" height="171" src="images/HondaAirwave2007.jpg">
+                                    </div>
+                                    <h3>S$ 15<small>/hr</small></h3>
+                                    <h4>Honda Airwave 2007</h4>
+                                    <p>
+                                        <span class="icon-map-marker">&nbsp;</span>Cantonment Close (Tanjong Pagar / Keppel Road / Outram Road)
+                                    </p>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div><div class="bx-controls bx-has-pager"><div class="bx-pager bx-default-pager"><div class="bx-pager-item"><a href="" data-slide-index="0" class="bx-pager-link active">1</a></div><div class="bx-pager-item"><a href="" data-slide-index="1" class="bx-pager-link">2</a></div><div class="bx-pager-item"><a href="" data-slide-index="2" class="bx-pager-link">3</a></div></div></div>
+            </div>
+        </div>
+    </section>
+</section>
+<section class="how-to-wrapper">
+    <div class="container">
+        <div class="span4">
+            <img src="Content/Images/owner-icon.png" width="100" height="100" alt="Are you a car owner?">
+            <h3 class="color-owner">Car Owners</h3>
+            <p>
+                Earn up to $1000 a month renting you car to pre-screened drivers whist protected by insurance. Decide your own rates, available timing and who to rent your car.
+            </p>
+            <a href="http://www.RydeKing.com/owner" class="btn btn-small">Learn more</a>
+        </div>
+        <div class="span4">
+            <img src="Content/Images/renter-icon.png" width="100" height="100" alt="Need a car to rent?">
+            <h3 class="color-renter">Car Drivers</h3>
+            <p>
+                Choose from our wide selection of cars or drive nearby cars with the best rental rates in town within 5 minutes! Pay what you use with no hidden charges.
+            </p>
+            <a href="http://www.RydeKing.com/renter" class="btn btn-small">Learn more</a>
+        </div>
+        <div class="span4 video-col pull-right">
+            <div class="howtovideo">
+                <!-- Button to trigger modal -->
+                <a href="http://www.RydeKing.com/#watchvideo" role="button" class="" data-toggle="modal"><img src="images/videolink-img.jpg" width="220" height="210" alt="watch how it works"></a>
+                <!-- Modal -->
+                <div id="watchvideo" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            ×
+                        </button>
+                        <h3 id="myModalLabel">How it works</h3>
+                    </div>
+                    <div class="modal-body">
+                        <object width="500" height="280">
+                            <param name="movie" value="http://www.youtube.com/v/yL68VzQzuho?version=3&amp;hl=en_US&amp;rel=0">
+
+                            <param name="allowFullScreen" value="true">
+
+                            <param name="allowscriptaccess" value="always">
+
+                            <embed src="http://www.youtube.com/v/yL68VzQzuho?version=3&amp;hl=en_US&amp;rel=0" type="application/x-shockwave-flash" width="550" height="309" allowscriptaccess="always" allowfullscreen="true">
+                        </object>
+                    </div>
+                </div>
+                <span>&nbsp;</span>
+                <h4>Watch how it works!</h4>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Featured On -->
+<section class="featured-on">
+    <div class="container ">
+        <h2>As seen on</h2>
+        <div class="bx-wrapper" style="max-width: 920px;">
+            <div class="bx-viewport" style="width: 100%; overflow: hidden; position: relative; height: 138px;">
+                <ul id="featured-on" class="" style="width: 1720%; position: relative; transition-timing-function: linear; transition-duration: 0s; transform: translate3d(-2789.91px, 0px, 0px);">
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;" class="bx-clone">
+                        <a target="_blank" href="http://www.moneysmart.sg/money-talks/peer-to-peer-car-sharing-is-it-worth-taking-part/" class="feature-logo" id="moneysmart"></a>
+                        <p>
+                            "What is peer to peer car sharing? Is it worth Taking Part? Decide yourself after reading this article."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;" class="bx-clone">
+                        <a target="_blank" href="http://www.tnp.sg/content/more-motorists-sharing-cars" class="feature-logo" id="tnp"></a>
+                        <p>
+                            "An example of a success story of an iCarsOwner, the next one making money from your free car time could be you."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;" class="bx-clone">
+                        <a target="_blank" href="http://sgentrepreneurs.com/2012/12/24/RydeKing-carsharing-singapor/" class="feature-logo" id="sge"></a>
+                        <p>
+                            "More convenient, less expensive. Understand where peer to peer car sharing stand compared to traditional car sharing."
+                        </p>
+                    </li>
+                    <!--li>
+                        <a target="_blank" href="http://cars.zaobao.com.sg/pages7/carnews120915.shtml" class="feature-logo" id="zaobao"></a>
+                        <p>
+                            "What is peer to peer car sharing? How does RydeKing work? Find out more about in Chinese now."
+                        </p>
+                    </li-->
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://sg.news.yahoo.com/RydeKing-peer-peer-car-sharing-111048874.html" class="feature-logo" id="yahoo"></a>
+                        <p>
+                            "Car owners can monetize “free” car time by sharing their car with a trusted community to lower cost of car ownership."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://techcrunch.com/2013/03/08/rent-your-car-out-service-RydeKing-gets-482000/" class="feature-logo" id="tc"></a>
+                        <p>
+                            "Homegrown peer to peer car sharing company RydeKing receive seed funding of $482,000 from Red Dot Ventures by National Research Foundatio. "
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://www.techinasia.com/RydeKing/" class="feature-logo" id="techinasia"></a>
+                        <p>
+                            "More enhanced car rental experience without massive paper work and keyless access to rent cars nearby."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://www.autorentalnews.com/News/Story/2012/10/RydeKing-Introduces-Car-Sharing-in-Singapore.aspx" class="feature-logo" id="autorental"></a>
+                        <p>
+                            "Do you know that in Singapore, 19% car owners are willing to rent out their cars when it is not in use?"
+                        </p>
+                    </li>
+                    <!--li>
+                        <a target="_blank" href="http://www.stcars.sg/guides-articles/motoring-news/firms-eye-car-sharing-market-as-coe-prices-soar/a/82396" class="feature-logo" id="st"></a>
+                        <p>
+                            "Find out about the story behind the launch of RydeKing, Asia’s First peer to peer car sharing company."
+                        </p>
+                    </li-->
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://e27.sg/2012/10/02/RydeKing-introduces-peer-to-peer-car-rentals-in-singapore/" class="feature-logo" id="e27"></a>
+                        <p>
+                            "Peer to Peer car sharing platform, RydeKing, planning to be launched in Singapore with keyless car entry technology"
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://www.moneysmart.sg/money-talks/peer-to-peer-car-sharing-is-it-worth-taking-part/" class="feature-logo" id="moneysmart"></a>
+                        <p>
+                            "What is peer to peer car sharing? Is it worth Taking Part? Decide yourself after reading this article."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://www.tnp.sg/content/more-motorists-sharing-cars" class="feature-logo" id="tnp"></a>
+                        <p>
+                            "An example of a success story of an iCarsOwner, the next one making money from your free car time could be you."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;">
+                        <a target="_blank" href="http://sgentrepreneurs.com/2012/12/24/RydeKing-carsharing-singapor/" class="feature-logo" id="sge"></a>
+                        <p>
+                            "More convenient, less expensive. Understand where peer to peer car sharing stand compared to traditional car sharing."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;" class="bx-clone">
+                        <a target="_blank" href="http://sg.news.yahoo.com/RydeKing-peer-peer-car-sharing-111048874.html" class="feature-logo" id="yahoo"></a>
+                        <p>
+                            "Car owners can monetize “free” car time by sharing their car with a trusted community to lower cost of car ownership."
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;" class="bx-clone">
+                        <a target="_blank" href="http://techcrunch.com/2013/03/08/rent-your-car-out-service-RydeKing-gets-482000/" class="feature-logo" id="tc"></a>
+                        <p>
+                            "Homegrown peer to peer car sharing company RydeKing receive seed funding of $482,000 from Red Dot Ventures by National Research Foundatio. "
+                        </p>
+                    </li>
+                    <li style="float: left; list-style: none; position: relative; width: 300px; margin-right: 10px;" class="bx-clone">
+                        <a target="_blank" href="http://www.techinasia.com/RydeKing/" class="feature-logo" id="techinasia"></a>
+                        <p>
+                            "More enhanced car rental experience without massive paper work and keyless access to rent cars nearby."
+                        </p>
+                    </li>
+                </ul>
+            </div><div class="bx-controls bx-has-pager bx-has-controls-direction"><div class="bx-pager bx-default-pager"><div class="bx-pager-item"><a href="" data-slide-index="0" class="bx-pager-link">1</a></div><div class="bx-pager-item"><a href="" data-slide-index="1" class="bx-pager-link">2</a></div><div class="bx-pager-item"><a href="" data-slide-index="2" class="bx-pager-link active">3</a></div></div><div class="bx-controls-direction"><a class="bx-prev" href="">Prev</a><a class="bx-next" href="">Next</a></div></div>
+        </div>
+    </div>
+</section>
+<section class="news">
+    <div class="container">
+        <h2><span class="icon-bullhorn">&nbsp;</span>News and Articles</h2>
+        <div class="span4">
+            <h4>Car Sharing is better then Car Rental</h4>
+            <p>
+                Do you know you are changing the world? Find out more about the impact for every car you share.
+            </p>
+            <a href="http://www.RydeKing.com/aboutus" class="btn">Read more</a>
+        </div>
+        <div class="span4">
+            <h4>Get rewarded for each friend you refer</h4>
+            <p>
+                Its more then just car sharing in RydeKing, share RydeKing with your friends and get rewarded
+            </p>
+            <a href="http://www.RydeKing.com/referral" class="btn">Read more</a>
+        </div>
+        <div class="span4 last">
+            <h4>Don’t Worry, we’ve got you covered</h4>
+            <p>
+                Share and rent with a peace of mind, find out how RydeKing keeps you protected with our comprehensive insurance coverage.
+            </p>
+            <a href="http://www.RydeKing.com/insurance-policy" class="btn">Read more</a>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+    /* Sliders */
+    /* Featured Car List Slider */
+    $(document).ready(function () {
+        $('.bxslider').bxSlider({
+            speed: 1500,
+            easing: 'ease-in-out',
+            infiniteLoop: true,
+            minSlides: 1,
+            maxSlides: 4,
+            slideWidth: 230,
+            slideMargin: 10,
+            touchEnabled: true,
+            controls: false,
+            auto: true,
+            autoControls: false,
+            pause: 8000,
+            autoHover: true,
+            randomStart: true,
+
+        });
+
+        $('#featured-on').bxSlider({
+            speed: 1000,
+            easing: 'linear',
+            infiniteLoop: true,
+            minSlides: 3,
+            maxSlides: 3,
+            slideWidth: 300,
+            slideMargin: 10,
+            touchEnabled: true,
+            controls: true,
+            auto: true,
+            autoControls: false,
+            pause: 12000,
+            autoHover: true,
+        });
+        $('.bxslider').removeClass('hide');
+        $('#featured-on').removeClass('hide');
+
+        $("#get-geo").live("click", function () { getGeo() });
+
+        function getGeo() {
+            navigator.geolocation ? navigator.geolocation.getCurrentPosition(function (e) {
+                getAddressByCoords(e.coords.latitude, e.coords.longitude, function (i, a) {
+                    a == google.maps.GeocoderStatus.OK && ($("input[name=keyword]").val(i[1].formatted_address), $("input[name=lat]").val(e.coords.latitude), $("input[name=lng]").val(e.coords.longitude))
+                });
+                var t = new google.maps.LatLng(e.coords.latitude, e.coords.longitude), i = new google.maps.Geocoder; i.geocode({ latLng: t }, function (i, a) { })
+            }, function () { handleNoGeolocation(!0) }) : handleNoGeolocation(!1)
+        };
+
+        $('.btn-find-car-home').live('click', function () {
+            $('#home-find-car-form').submit();
+        });
+    });
+
+    //Tool Tips
+
+    /*************************************************************************
+     HOME BACKGROUND PARALLAX SCROLL
+     *************************************************************************/
+
+    // cache the window object
+    $window = $(window);
+
+    $('div[data-type="background"]').each(function () {
+        var $bgobj = $(this);
+        // assigning the object
+        $(window).scroll(function () {
+            var yPos = -($window.scrollTop() / $bgobj.data('speed'));
+            // put together our final background position
+            var coords = '50% ' + yPos + 'px';
+            // move the background
+            $bgobj.css({
+                backgroundPosition: coords
+            });
+        });
+    });
+
+</script>

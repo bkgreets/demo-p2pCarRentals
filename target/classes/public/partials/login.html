@@ -1,0 +1,73 @@
+﻿<div id="page">
+    <div class="container mainPage">
+        <div class="row">
+            <div class="span6 center">
+                <h2>Log in to RydeKing</h2>
+
+
+                <div id="login_form">
+                    <form class="form-horizontal" action="/login" method="post">
+                        <input type="hidden" name="previousurl" id="previousurl" value=""><!-- 927modify //-->
+                        <fieldset>
+                            <div class="control-group">
+                                <div class="controls text_left">
+
+                                    <a href="{{facebookurl}}" class="btn btn-fb btn-large"><i class="icon icon-facebook"></i> Log in with Facebook</a>
+
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <div class="controls text_left">
+                                    <p class="offset30p">
+                                        <br>
+                                        <span class="lthru">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                        Or<span class="lthru">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br>
+                                    </p>
+                                </div>
+                            </div>
+
+
+
+
+                            <div class="control-group ">
+                                <label class="control-label" for="input-email">Email</label>
+                                <div class="controls text_left">
+                                    <input type="text" class="input-large" id="input-email" name="email" ng-model="login.id">
+
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="input-password">Password</label>
+                                <div class="controls text_left">
+                                    <input type="password" class="input-large" id="input-password" name="password" ng-model="login.password">
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <div class="controls text_left">
+                                    <input type="button" ng-click="login()" class="btn btn-success" name="login" value="Log in">
+                                    <span class="separator"> | </span>
+                                    <a class="blue" href="/account/forgotpassword">Forgot Password?</a>
+                                </div>
+                            </div>
+
+
+
+
+
+
+
+
+                        </fieldset>
+                    </form>
+                </div>
+
+            </div>
+            <div class="span3 well info">
+                <h4>No Account Yet?</h4>
+                <br>
+                <p><a class="btn btn-primary" href="#/signup">Sign up</a></p>
+
+            </div>
+        </div>
+    </div>
+</div>
